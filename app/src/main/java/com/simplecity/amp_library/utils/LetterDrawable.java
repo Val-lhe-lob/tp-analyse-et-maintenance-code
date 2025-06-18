@@ -22,9 +22,9 @@ public class LetterDrawable extends Drawable {
         mColors = colors;
         mPaint = paint;
         mKeyName = StringUtils.keyFor(displayName);
-        if (displayName != null && displayName.length() != 0) {
+        if (displayName != null && !displayName.isEmpty()) {
             String key = StringUtils.keyFor(displayName);
-            if (key != null && key.length() != 0) {
+            if (key != null && !key.isEmpty()) {
                 mFirstChar = new char[] { Character.toUpperCase(key.charAt(0)) };
             }
         }
@@ -32,11 +32,11 @@ public class LetterDrawable extends Drawable {
 
     @Override
     public void draw(Canvas canvas) {
-        if (mFirstChar == null || mKeyName == null || mFirstChar.length == 0 || mKeyName.length() == 0) {
+        if (mFirstChar == null || mKeyName == null || mFirstChar.length == 0 || mKeyName.isEmpty()) {
             return;
         }
         canvas.drawColor(pickColor(mDisplayName));
-        if (mKeyName.length() > 0) {
+        if (!mKeyName.isEmpty()) {
             mPaint.setTextSize(canvas.getHeight() * 3 / 5);
             mPaint.getTextBounds(mFirstChar, 0, 1, getBounds());
             canvas.drawText(mFirstChar, 0, 1, canvas.getWidth() / 2, canvas.getHeight() / 2
@@ -46,12 +46,12 @@ public class LetterDrawable extends Drawable {
 
     @Override
     public void setAlpha(int alpha) {
-
+        // WIP
     }
 
     @Override
     public void setColorFilter(ColorFilter cf) {
-
+        // WIP
     }
 
     @Override
@@ -67,7 +67,7 @@ public class LetterDrawable extends Drawable {
     private int pickColor(String key) {
         // String.hashCode() is not supposed to change across java versions, so
         // this should guarantee the same key always maps to the same color
-        final int color = Math.abs(key.hashCode()) % mColors.length();
+        final int color = Math.abs(key) % mColors.length();
         return mColors.getColor(color, Color.BLACK);
     }
 }

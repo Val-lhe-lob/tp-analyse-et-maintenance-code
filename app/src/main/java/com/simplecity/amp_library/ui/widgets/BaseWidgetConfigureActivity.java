@@ -82,12 +82,12 @@ public abstract class BaseWidgetConfigureActivity extends BaseActivity implement
 
     private Button backgroundColorButton;
     private Button textColorButton;
-    private SizableSeekBar seekBar;
+    
 
     private int backgroundColor;
     private int textColor;
     private boolean showAlbumArt;
-    private boolean invertIcons;
+    
 
     SparseArray<Fragment> registeredFragments = new SparseArray<>();
 
@@ -96,6 +96,7 @@ public abstract class BaseWidgetConfigureActivity extends BaseActivity implement
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SizableSeekBar seekBar;
         AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
 
@@ -174,6 +175,7 @@ public abstract class BaseWidgetConfigureActivity extends BaseActivity implement
 
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+        boolean invertIcons;
 
         if (compoundButton.getId() == R.id.checkBox1) {
             showAlbumArt = checked;
@@ -291,7 +293,7 @@ public abstract class BaseWidgetConfigureActivity extends BaseActivity implement
 
         @Override
         public CharSequence getPageTitle(int position) {
-            return "Layout " + String.valueOf(position + 1);
+            return "Layout " + (position + 1);
         }
 
         @Override
@@ -313,122 +315,125 @@ public abstract class BaseWidgetConfigureActivity extends BaseActivity implement
     }
 
     public void updateWidgetUI() {
+    backgroundColor = prefs.getInt(BaseWidgetProvider.ARG_WIDGET_BACKGROUND_COLOR + appWidgetId, ContextCompat.getColor(this, R.color.white));
+    textColor = prefs.getInt(BaseWidgetProvider.ARG_WIDGET_TEXT_COLOR + appWidgetId, ContextCompat.getColor(this, R.color.white));
 
-        backgroundColor = prefs.getInt(BaseWidgetProvider.ARG_WIDGET_BACKGROUND_COLOR + appWidgetId, ContextCompat.getColor(this, R.color.white));
-        textColor = prefs.getInt(BaseWidgetProvider.ARG_WIDGET_TEXT_COLOR + appWidgetId, ContextCompat.getColor(this, R.color.white));
+    setupButtonDrawable(backgroundColorButton, R.drawable.bg_rounded);
+    setupButtonDrawable(textColorButton, R.drawable.bg_rounded);
 
-        Drawable backgroundButtonDrawable = DrawableCompat.wrap(ContextCompat.getDrawable(this, R.drawable.bg_rounded));
-        backgroundButtonDrawable.setBounds(0, 0, 60, 60);
-        backgroundColorButton.setCompoundDrawables(backgroundButtonDrawable, null, null, null);
+    Fragment fragment = adapter.getRegisteredFragment(pager.getCurrentItem());
+    if (fragment == null) return;
 
-        Drawable textButtonDrawable = ContextCompat.getDrawable(this, R.drawable.bg_rounded);
-        textButtonDrawable.setBounds(0, 0, 60, 60);
-        textColorButton.setCompoundDrawables(textButtonDrawable, null, null, null);
+    View view = fragment.getView();
+    if (view == null) return;
 
-        Fragment fragment = adapter.getRegisteredFragment(pager.getCurrentItem());
-        if (fragment != null) {
-            View view = fragment.getView();
-            if (view != null) {
-                View widgetLayout = view.findViewById(getRootViewId());
-                widgetLayout.setBackgroundColor(ColorUtils.adjustAlpha(backgroundColor, alpha));
-                TextView text1 = widgetLayout.findViewById(R.id.text1);
-                TextView text2 = widgetLayout.findViewById(R.id.text2);
-                TextView text3 = widgetLayout.findViewById(R.id.text3);
-                Song song = mediaManager.getSong();
+    View widgetLayout = view.findViewById(getRootViewId());
+    widgetLayout.setBackgroundColor(ColorUtils.adjustAlpha(backgroundColor, alpha));
 
-                String trackName = null;
-                String artistName = null;
-                String albumName = null;
-                if (song != null) {
-                    trackName = song.name;
-                    artistName = song.albumArtistName;
-                    albumName = song.albumName;
-                }
-                if (trackName != null && text1 != null) {
-                    text1.setText(trackName);
-                    text1.setTextColor(textColor);
-                }
-                if (artistName != null && albumName != null && text2 != null && text3 == null) {
-                    text2.setText(artistName + " • " + albumName);
-                    text2.setTextColor(textColor);
-                } else if (artistName != null && albumName != null && text2 != null) {
-                    text2.setText(albumName);
-                    text2.setTextColor(textColor);
-                    text3.setText(artistName);
-                    text3.setTextColor(textColor);
-                }
+    updateTextFields(widgetLayout);
+    updateAlbumArt(widgetLayout);
+}
 
-                ImageButton shuffleButton = widgetLayout.findViewById(R.id.shuffle_button);
-                ImageButton prevButton = widgetLayout.findViewById(R.id.prev_button);
-                ImageButton playButton = widgetLayout.findViewById(R.id.play_button);
-                ImageButton skipButton = widgetLayout.findViewById(R.id.next_button);
-                ImageButton repeatButton = widgetLayout.findViewById(R.id.repeat_button);
+private void setupButtonDrawable(TextView button, int drawableRes) {
+    Drawable drawable = DrawableCompat.wrap(ContextCompat.getDrawable(this, drawableRes));
+    drawable.setBounds(0, 0, 60, 60);
+    button.setCompoundDrawables(drawable, null, null, null);
+}
 
-                final ImageView albumArt = widgetLayout.findViewById(R.id.album_art);
-                if (albumArt != null) {
+private void updateTextFields(View layout) {
+    TextView text1 = layout.findViewById(R.id.text1);
+    TextView text2 = layout.findViewById(R.id.text2);
+    TextView text3 = layout.findViewById(R.id.text3);
 
-                    if (!showAlbumArt) {
-                        albumArt.setVisibility(View.GONE);
-                        return;
-                    } else {
-                        albumArt.setVisibility(View.VISIBLE);
-                        if (pager.getCurrentItem() == 1) {
-                            int colorFilterColor = ContextCompat.getColor(this, R.color.color_filter);
-                            albumArt.setColorFilter(colorFilterColor);
-                            prefs.edit().putInt(BaseWidgetProvider.ARG_WIDGET_COLOR_FILTER + appWidgetId, colorFilterColor).apply();
-                        } else {
-                            prefs.edit().putInt(BaseWidgetProvider.ARG_WIDGET_COLOR_FILTER + appWidgetId, -1).apply();
-                        }
-                    }
+    Song song = mediaManager.getSong();
+    if (song == null) return;
 
-                    Glide.with(this)
-                            .load(mediaManager.getSong())
-                            .diskCacheStrategy(DiskCacheStrategy.ALL)
-                            .placeholder(R.drawable.ic_placeholder_light_medium)
-                            .into(albumArt);
-                }
-            }
+    if (text1 != null) {
+        text1.setText(song.name);
+        text1.setTextColor(textColor);
+    }
+
+    if (song.albumArtistName != null && song.albumName != null && text2 != null) {
+        if (text3 == null) {
+            text2.setText(song.albumArtistName + " • " + song.albumName);
+            text2.setTextColor(textColor);
+        } else {
+            text2.setText(song.albumName);
+            text2.setTextColor(textColor);
+            text3.setText(song.albumArtistName);
+            text3.setTextColor(textColor);
         }
     }
+}
+
+private void updateAlbumArt(View layout) {
+    ImageView albumArt = layout.findViewById(R.id.album_art);
+    if (albumArt == null) return;
+
+    if (!showAlbumArt) {
+        albumArt.setVisibility(View.GONE);
+        return;
+    }
+
+    albumArt.setVisibility(View.VISIBLE);
+    if (pager.getCurrentItem() == 1) {
+        int colorFilterColor = ContextCompat.getColor(this, R.color.color_filter);
+        albumArt.setColorFilter(colorFilterColor);
+        prefs.edit().putInt(BaseWidgetProvider.ARG_WIDGET_COLOR_FILTER + appWidgetId, colorFilterColor).apply();
+    } else {
+        prefs.edit().putInt(BaseWidgetProvider.ARG_WIDGET_COLOR_FILTER + appWidgetId, -1).apply();
+    }
+
+    Glide.with(this)
+        .load(mediaManager.getSong())
+        .diskCacheStrategy(DiskCacheStrategy.ALL)
+        .placeholder(R.drawable.ic_placeholder_light_medium)
+        .into(albumArt);
+}
+
 
     @Override
-    public void onColorSelection(@NonNull ColorChooserDialog dialog, @ColorInt int selectedColor) {
-        if (dialog == textColorDialog) {
-            textColor = selectedColor;
-            prefs.edit().putInt(BaseWidgetProvider.ARG_WIDGET_TEXT_COLOR + appWidgetId, selectedColor).apply();
+public void onColorSelection(@NonNull ColorChooserDialog dialog, @ColorInt int selectedColor) {
+    if (dialog == textColorDialog) {
+        textColor = selectedColor;
+        prefs.edit().putInt(BaseWidgetProvider.ARG_WIDGET_TEXT_COLOR + appWidgetId, selectedColor).apply();
+        applyTextColorToWidget();
+    } else if (dialog == backgroundColorDialog) {
+        backgroundColor = selectedColor;
+        prefs.edit().putInt(BaseWidgetProvider.ARG_WIDGET_BACKGROUND_COLOR + appWidgetId, selectedColor).apply();
+        applyBackgroundColorToWidget();
+    }
+}
 
-            Fragment fragment = adapter.getRegisteredFragment(pager.getCurrentItem());
-            if (fragment != null) {
-                View widgetView = fragment.getView();
-                if (widgetView != null) {
-                    TextView text1 = widgetView.findViewById(R.id.text1);
-                    if (text1 != null) {
-                        text1.setTextColor(textColor);
-                    }
-                    TextView text2 = widgetView.findViewById(R.id.text2);
-                    if (text2 != null) {
-                        text2.setTextColor(textColor);
-                    }
-                    TextView text3 = widgetView.findViewById(R.id.text3);
-                    if (text3 != null) {
-                        text3.setTextColor(textColor);
-                    }
-                }
-            }
-        } else if (dialog == backgroundColorDialog) {
-            backgroundColor = selectedColor;
-            prefs.edit().putInt(BaseWidgetProvider.ARG_WIDGET_BACKGROUND_COLOR + appWidgetId, selectedColor).apply();
+private void applyTextColorToWidget() {
+    Fragment fragment = adapter.getRegisteredFragment(pager.getCurrentItem());
+    if (fragment == null) return;
 
-            Fragment fragment = adapter.getRegisteredFragment(pager.getCurrentItem());
-            if (fragment != null) {
-                View fragmentView = fragment.getView();
-                if (fragmentView != null) {
-                    View layout = fragmentView.findViewById(getRootViewId());
-                    layout.setBackgroundColor(ColorUtils.adjustAlpha(backgroundColor, alpha));
-                }
-            }
+    View view = fragment.getView();
+    if (view == null) return;
+
+    int[] textIds = {R.id.text1, R.id.text2, R.id.text3};
+    for (int id : textIds) {
+        TextView textView = view.findViewById(id);
+        if (textView != null) {
+            textView.setTextColor(textColor);
         }
     }
+}
+
+private void applyBackgroundColorToWidget() {
+    Fragment fragment = adapter.getRegisteredFragment(pager.getCurrentItem());
+    if (fragment == null) return;
+
+    View view = fragment.getView();
+    if (view == null) return;
+
+    View layout = view.findViewById(getRootViewId());
+    if (layout != null) {
+        layout.setBackgroundColor(ColorUtils.adjustAlpha(backgroundColor, alpha));
+    }
+}
+
 
     @Override
     public void onColorChooserDismissed(@NonNull ColorChooserDialog dialog) {

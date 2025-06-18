@@ -29,8 +29,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class SnowfallView extends View {
 
-    private static final String TAG = SnowfallView.class.getSimpleName();
-
     /** The Remote Config key used to determine if it snows */
     private static final String LET_IT_SNOW = "let_it_snow";
 
@@ -119,11 +117,10 @@ public class SnowfallView extends View {
     }
 
     public void letItSnow(AnalyticsManager analyticsManager) {
-        if (snowflakes.isEmpty()) {
-            if (lerp(0f, 1f, snowRng.nextFloat()) <= LUCKY) {
+        if (snowflakes.isEmpty() && lerp(0f, 1f, snowRng.nextFloat()) <= LUCKY) {
                 fetchSnowConfig(analyticsManager);
             }
-        }
+        
     }
 
     public boolean isSnowing() {
@@ -167,20 +164,20 @@ public class SnowfallView extends View {
         for (int i = 0; i < numFlakes; i++) {
             final double angle = toRadians(lerp(MIN_ANGLE, MAX_ANGLE, snowRng.nextDouble()));
             final float speed = lerp(MIN_SPEED, MAX_SPEED, snowRng.nextFloat());
-            final float velX = (float) ((double) speed * cos(angle));
-            final float velY = (float) ((double) speed * sin(angle));
+            final float velX = (float) (speed * cos(angle));
+            final float velY = (float) (speed * sin(angle));
             final float size = lerp(MIN_SIZE, MAX_SIZE, snowRng.nextFloat());
             final float startX = lerp(0f, (float) getWidth(), snowRng.nextFloat());
             float startY = lerp(0f, (float) getHeight(), snowRng.nextFloat());
             startY -= (float) getHeight() - size;
-            final int alpha = (int) lerp((float) MIN_ALPHA, (float) MAX_ALPHA, snowRng.nextFloat());
+            final int alpha = (int) lerp((float) MIN_ALPHA, (float) MAX_ALPHA, snowRng.nextInt());
             snowflakes.add(new Snowflake(startX, startY, velX, velY, size, alpha));
         }
         invalidate();
     }
 
     public void removeSnow() {
-        if (snowflakes.size() > 0) {
+        if (!snowflakes.isEmpty()) {
             snowHandler.removeCallbacksAndMessages(null);
             for (Snowflake snowflake : snowflakes) {
                 snowflake.shouldRemove = true;
@@ -212,12 +209,14 @@ public class SnowfallView extends View {
             this.alpha = alpha;
         }
 
-        float snowX() {
-            return snowX += velX;
+        float snowXFunc() {
+            snowX += velX;
+            return snowX;
         }
 
-        float snowY() {
-            return snowY += velY;
+        float snowYFunc() {
+            snowY += velY;
+            return snowY;
         }
 
         void reset() {

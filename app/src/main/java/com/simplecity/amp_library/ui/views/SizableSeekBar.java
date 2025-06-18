@@ -12,9 +12,7 @@ import com.afollestad.aesthetic.AestheticSeekBar;
 
 public class SizableSeekBar extends AestheticSeekBar {
 
-    private static final String TAG = "SizableSeekBar";
-
-    private static final float maxThumbSizeRatio = 2.0f;
+    private static final float MAX_THUMB_SIZE_RATIO = 2.0f;
 
     float currentThumbSizeRatio = 1.0f;
     OnSeekBarChangeListener seekListener;
@@ -42,7 +40,7 @@ public class SizableSeekBar extends AestheticSeekBar {
             thumbShrinkAnimator.cancel();
             thumbShrinkAnimator = null;
         }
-        thumbGrowAnimator = ValueAnimator.ofFloat(currentThumbSizeRatio, maxThumbSizeRatio);
+        thumbGrowAnimator = ValueAnimator.ofFloat(currentThumbSizeRatio, MAX_THUMB_SIZE_RATIO);
         thumbGrowAnimator.setInterpolator(interpolator);
         thumbGrowAnimator.addUpdateListener(mAnimatorListener);
         thumbGrowAnimator.setDuration(300);
@@ -77,7 +75,7 @@ public class SizableSeekBar extends AestheticSeekBar {
         }
 
         this.thumb = thumb;
-        int level = (int) (10000F * (1.0F / maxThumbSizeRatio));
+        int level = (int) (10000F * (1.0F / MAX_THUMB_SIZE_RATIO));
         this.thumb.setLevel(level);
         super.setThumb(this.thumb);
     }
@@ -90,7 +88,7 @@ public class SizableSeekBar extends AestheticSeekBar {
         @Override
         public void onAnimationUpdate(ValueAnimator valueAnimator) {
             currentThumbSizeRatio = (Float) valueAnimator.getAnimatedValue();
-            int level = (int) (10000F * (currentThumbSizeRatio / maxThumbSizeRatio));
+            int level = (int) (10000F * (currentThumbSizeRatio / MAX_THUMB_SIZE_RATIO));
             thumb.setLevel(level);
             SizableSeekBar.this.invalidate();
         }

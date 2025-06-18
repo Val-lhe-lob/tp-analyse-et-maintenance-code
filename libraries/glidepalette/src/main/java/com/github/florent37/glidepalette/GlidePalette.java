@@ -17,11 +17,12 @@ public class GlidePalette<ModelType, TranscodeType> extends BitmapPalette implem
     }
 
     public static GlidePalette with(String url) {
-        GlidePalette glidePalette = new GlidePalette();
+        glidePalette = new GlidePalette();
         glidePalette.url = url;
         return glidePalette;
     }
 
+    @Override
     public GlidePalette use(@Profile int paletteProfile) {
         super.use(paletteProfile);
         return this;
