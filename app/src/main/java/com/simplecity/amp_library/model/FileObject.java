@@ -7,9 +7,9 @@ import com.simplecity.amp_library.utils.StringUtils;
 
 public class FileObject extends BaseFileObject {
 
-    public String extension;
+    public static final String EXTENSION;
 
-    public TagInfo tagInfo;
+    public static final TagInfo TAG_INFO;
 
     private long duration = 0;
 

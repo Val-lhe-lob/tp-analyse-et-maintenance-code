@@ -13,8 +13,6 @@ public class LoggingViewModelAdapter extends ViewModelAdapter {
 
     private static final String TAG = "LoggingVMAdapter";
 
-    String tag;
-
     public LoggingViewModelAdapter(String tag) {
         this.tag = tag;
     }

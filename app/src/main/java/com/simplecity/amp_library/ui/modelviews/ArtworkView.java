@@ -130,7 +130,7 @@ public class ArtworkView extends BaseViewModel<ArtworkView.ViewHolder> {
                         return false;
                     }
                 })
-                .into(new ImageViewTarget<BitmapAndSize>(((ViewHolder) holder).imageView) {
+                .into(new ImageViewTarget<BitmapAndSize>(( holder).imageView) {
                     @Override
                     protected void setResource(BitmapAndSize resource) {
                         holder.textContainer.setBackgroundResource(R.drawable.text_protection_scrim_reversed);
@@ -168,22 +168,15 @@ public class ArtworkView extends BaseViewModel<ArtworkView.ViewHolder> {
 
     public static class ViewHolder extends BaseViewHolder<ArtworkView> {
 
-        public ImageView imageView;
-        public TextView lineOne;
-        public TextView lineTwo;
-        public View checkView;
-        public View textContainer;
-        public ProgressBar progressBar;
+        public static final ImageView imageView;
+        public static final TextView lineOne;
+        public static final TextView lineTwo;
+        public static final View checkView;
+        public static final View textContainer;
+        public static final ProgressBar progressBar;
 
         public ViewHolder(View itemView) {
             super(itemView);
-
-            imageView = itemView.findViewById(R.id.imageView);
-            lineOne = itemView.findViewById(R.id.line_one);
-            lineTwo = itemView.findViewById(R.id.line_two);
-            checkView = itemView.findViewById(R.id.checkView);
-            textContainer = itemView.findViewById(R.id.textContainer);
-            progressBar = itemView.findViewById(R.id.progressBar);
 
             itemView.setOnClickListener(v -> viewModel.onClick());
         }

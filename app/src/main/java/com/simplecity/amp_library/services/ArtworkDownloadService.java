@@ -119,8 +119,10 @@ public class ArtworkDownloadService extends Service {
                                     .downloadOnly(SimpleTarget.SIZE_ORIGINAL, SimpleTarget.SIZE_ORIGINAL);
                             try {
                                 futureTarget.get(30, TimeUnit.SECONDS);
-                            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                                Log.e(TAG, "Error downloading artworkProvider: " + e);
+                            } catch (ExecutionException | TimeoutException e) {
+                                e.printStackTrace(); // handle those
+                            } catch (InterruptedException e) {
+                                throw e; // propagate the interruption
                             }
                             Glide.clear(futureTarget);
                             return artwork;

@@ -31,8 +31,6 @@ import java.util.List;
 
 public class FolderView extends BaseSelectableViewModel<FolderView.ViewHolder> {
 
-    private static final String TAG = "FolderView";
-
     public interface ClickListener {
 
         void onFileObjectClick(int position, FolderView folderView);
@@ -310,11 +308,10 @@ public class FolderView extends BaseSelectableViewModel<FolderView.ViewHolder> {
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
 
-            if (textView != null) {
-                if (((WeakReference<DurationTask>) textView.getTag()).get() == DurationTask.this) {
+            if (textView != null && ((WeakReference<DurationTask>) textView.getTag()).get() == DurationTask.this) {
                     textView.setText(s);
                 }
-            }
+            
         }
     }
 
@@ -342,8 +339,7 @@ public class FolderView extends BaseSelectableViewModel<FolderView.ViewHolder> {
         if (other == null || getClass() != other.getClass()) return false;
         if (!super.areContentsEqual(other)) return false;
 
-        if (!baseFileObject.equals(((FolderView) other).baseFileObject)) return false;
-        //        if (isSelected() != ((FolderView) other).isSelected()) return false;
-        return true;
+        return baseFileObject.equals(that.baseFileObject)
+        && isSelected() == that.isSelected();
     }
 }
