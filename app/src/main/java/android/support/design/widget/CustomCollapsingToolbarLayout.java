@@ -400,13 +400,12 @@ public class CustomCollapsingToolbarLayout extends FrameLayout {
             final int insetTop = mLastInsets.getSystemWindowInsetTop();
             for (int i = 0, z = getChildCount(); i < z; i++) {
                 final View child = getChildAt(i);
-                if (!ViewCompat.getFitsSystemWindows(child)) {
-                    if (child.getTop() < insetTop) {
+                if (!ViewCompat.getFitsSystemWindows(child) && child.getTop() < insetTop) {
                         // If the child isn't set to fit system windows but is drawing within
                         // the inset offset it down
                         ViewCompat.offsetTopAndBottom(child, insetTop);
                     }
-                }
+                
             }
         }
 
@@ -1235,16 +1234,16 @@ public class CustomCollapsingToolbarLayout extends FrameLayout {
                 final LayoutParams lp = (LayoutParams) child.getLayoutParams();
                 final ViewOffsetHelper offsetHelper = getViewOffsetHelper(child);
 
-                switch (lp.mCollapseMode) {
-                    case LayoutParams.COLLAPSE_MODE_PIN:
-                        offsetHelper.setTopAndBottomOffset(
-                                MathUtils.clamp(-verticalOffset, 0, getMaxOffsetForPinChild(child)));
-                        break;
-                    case LayoutParams.COLLAPSE_MODE_PARALLAX:
-                        offsetHelper.setTopAndBottomOffset(
-                                Math.round(-verticalOffset * lp.mParallaxMult));
-                        break;
+                if (lp.mCollapseMode == LayoutParams.COLLAPSE_MODE_PIN) {
+                    offsetHelper.setTopAndBottomOffset(
+                        MathUtils.clamp(-verticalOffset, 0, getMaxOffsetForPinChild(child)));
+                } else if (lp.mCollapseMode == LayoutParams.COLLAPSE_MODE_PARALLAX) {
+                    offsetHelper.setTopAndBottomOffset(
+                        Math.round(-verticalOffset * lp.mParallaxMult));
+                } else {
+                    // Handle default or unknown collapse mode
                 }
+
             }
 
             // Show or hide the scrims if needed

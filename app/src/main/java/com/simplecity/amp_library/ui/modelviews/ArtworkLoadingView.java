@@ -25,7 +25,7 @@ public class ArtworkLoadingView extends BaseViewModel<ArtworkLoadingView.ViewHol
         return new ViewHolder(createView(parent));
     }
 
-    public static class ViewHolder extends BaseViewHolder {
+    public static class ViewHolder extends BaseViewHolder<Artwork> {
 
         public ViewHolder(View itemView) {
             super(itemView);
