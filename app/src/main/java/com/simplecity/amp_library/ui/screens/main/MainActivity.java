@@ -73,12 +73,6 @@ public class MainActivity extends BaseActivity implements
     @Inject
     Repository.SongsRepository songsRepository;
 
-    @Inject
-    AnalyticsManager analyticsManager;
-
-    @Inject
-    SettingsManager settingsManager;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         AndroidInjection.inject(this);
