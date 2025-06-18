@@ -89,7 +89,7 @@ class PlaylistListFragment :
     override fun onPause() {
         super.onPause()
 
-        refreshDisposable?.dispose()
+        refreshDisposable.dispose()
 
         disposables.clear()
     }

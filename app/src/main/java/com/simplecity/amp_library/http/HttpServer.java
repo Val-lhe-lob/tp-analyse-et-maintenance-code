@@ -128,7 +128,11 @@ public class HttpServer {
                         long contentLength = end - start + 1;
                         cleanupAudioStream();
                         audioInputStream = new FileInputStream(file);
-                        audioInputStream.skip(start);
+                        long skipped = audioInputStream.skip(start);
+                        if (skipped < start) {
+                            Log.w(TAG, "Skipped only " + skipped + " of " + start + " bytes");
+                            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_TYPE_HTML, "Unable to skip to requested byte range");
+                        }
                         Response response = newFixedLengthResponse(Response.Status.PARTIAL_CONTENT, getMimeType(audioFileToServe), audioInputStream, contentLength);
                         response.addHeader("Content-Length", String.valueOf(contentLength));
                         response.addHeader("Content-Range", "bytes " + start + "-" + end + "/" + fileLength);
