@@ -99,16 +99,7 @@ public class LibraryController extends BaseFragment implements
     AppBarLayout appBarLayout;
 
     @Inject
-    NavigationEventRelay navigationEventRelay;
-
-    @Inject
     SettingsManager settingsManager;
-
-    @Inject
-    MultiSheetEventRelay multiSheetEventRelay;
-
-    @Inject
-    AnalyticsManager analyticsManager;
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 

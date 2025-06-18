@@ -8,8 +8,6 @@ import io.reactivex.disposables.Disposable;
 
 public class DragHandle extends AestheticTintedImageView {
 
-    private Disposable aestheticDisposable;
-
     public DragHandle(Context context, AttributeSet attrs) {
         super(context, attrs);
     }

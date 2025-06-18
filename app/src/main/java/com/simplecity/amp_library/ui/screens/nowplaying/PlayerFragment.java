@@ -154,9 +154,6 @@ public class PlayerFragment extends BaseFragment implements
     PlayerPresenter presenter;
 
     @Inject
-    NavigationEventRelay navigationEventRelay;
-
-    @Inject
     MultiSheetSlideEventRelay sheetEventRelay;
 
     @Inject
