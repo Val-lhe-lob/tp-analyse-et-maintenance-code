@@ -61,7 +61,7 @@ public class Equalizer {
 
     public void releaseEffects() {
         Stream.of(mAudioSessions.values())
-                .filter(effectSet -> effectSet != null)
+                .filter(Objects::nonNull)
                 .forEach(EffectSet::release);
     }
 
@@ -94,7 +94,6 @@ public class Equalizer {
          */
         private Virtualizer virtualizer;
 
-        //        private final PresetReverb mPresetReverb;
 
         private short mEqNumPresets = -1;
         private short mEqNumBands = -1;
@@ -103,7 +102,6 @@ public class Equalizer {
             equalizer = new android.media.audiofx.Equalizer(1, sessionId);
             bassBoost = new BassBoost(1, sessionId);
             virtualizer = new Virtualizer(1, sessionId);
-            //            mPresetReverb = new PresetReverb(0, sessionId);
         }
 
         /*
@@ -181,26 +179,10 @@ public class Equalizer {
             }
         }
 
-        //        public void enableReverb(boolean enable) {
-        //            if (enable != mPresetReverb.getEnabled()) {
-        //                if (!enable) {
-        //                    mPresetReverb.setPreset((short) 0);
-        //                }
-        //                mPresetReverb.setEnabled(enable);
-        //            }
-        //        }
-
-        //        public void setReverbPreset(short preset) {
-        //            if (mPresetReverb.getEnabled() && mPresetReverb.getPreset() != preset) {
-        //                mPresetReverb.setPreset(preset);
-        //            }
-        //        }
-
         public void release() {
             equalizer.release();
             bassBoost.release();
             virtualizer.release();
-            //            mPresetReverb.release();
         }
     }
 
@@ -219,8 +201,7 @@ public class Equalizer {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             int sessionId = intent.getIntExtra(AudioEffect.EXTRA_AUDIO_SESSION, 0);
-            if (action.equals(ACTION_OPEN_EQUALIZER_SESSION)) {
-                if (!mAudioSessions.containsKey(sessionId)) {
+            if (action.equals(ACTION_OPEN_EQUALIZER_SESSION) && !mAudioSessions.containsKey(sessionId)) {
                     try {
                         EffectSet effectSet = new EffectSet(sessionId);
                         mAudioSessions.put(sessionId, effectSet);
@@ -228,7 +209,7 @@ public class Equalizer {
                         Log.e(TAG, "Failed to open EQ session.. EffectSet error " + e);
                     }
                 }
-            }
+            
             if (action.equals(ACTION_CLOSE_EQUALIZER_SESSION)) {
                 EffectSet gone = mAudioSessions.remove(sessionId);
                 if (gone != null) {
@@ -304,7 +285,7 @@ public class Equalizer {
      */
     public synchronized void update() {
         try {
-            for (Integer sessionId : mAudioSessions.keySet()) {
+            for (Integer sessionId : mAudioSessions.entrySet()) {
                 updateDsp(mAudioSessions.get(sessionId));
             }
         } catch (NoSuchMethodError e) {
@@ -322,24 +303,14 @@ public class Equalizer {
             Log.e(TAG, "Error enabling bass boost!", e);
         }
 
-        //        try {
-        //            short preset = Short.decode(sharedPreferences.getString("audiofx.reverb.preset", String.valueOf(PresetReverb.PRESET_NONE)));
-        //            session.enableReverb(globalEnabled && (preset > 0));
-        //            session.setReverbPreset(preset);
-        //
-        //        } catch (Exception e) {
-        //            Log.e(TAG, "Error enabling reverb preset", e);
-        //        }
-
         try {
             session.enableEqualizer(globalEnabled);
             final int customPresetPos = session.getNumEqualizerPresets();
-            final int preset = Integer.valueOf(mPrefs.getString("audiofx.eq.preset", String.valueOf(customPresetPos)));
+            final int preset = Integer.parseInt(mPrefs.getString("audiofx.eq.preset", String.valueOf(customPresetPos)));
             final int bands = session.getNumEqualizerBands();
 
             /*
              * Equalizer state is in a single string preference with all values
-             * separated by ;
              */
             String[] levels;
 

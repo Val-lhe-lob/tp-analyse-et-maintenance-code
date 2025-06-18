@@ -19,10 +19,6 @@ public class HorizontalRecyclerView extends BaseViewModel<HorizontalRecyclerView
 
     public static final ViewModelAdapter viewModelAdapter;
 
-    public HorizontalRecyclerView() {
-        this.viewModelAdapter = new ViewModelAdapter();
-    }
-
     public Disposable setItems(List<ViewModel> items) {
         return viewModelAdapter.setItems(items);
     }

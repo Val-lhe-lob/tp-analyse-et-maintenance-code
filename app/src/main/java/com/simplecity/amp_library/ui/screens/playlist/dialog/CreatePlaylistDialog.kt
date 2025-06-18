@@ -98,7 +98,6 @@ class CreatePlaylistDialog : DialogFragment() {
                                 val uri: Uri?
                                 if (id >= 0) {
                                     val uri1 = MediaStore.Audio.Playlists.Members.getContentUri("external", id!!.toLong())
-                                    val uri1 = MediaStore.Audio.Playlists.Members.getContentUri("external", id as Long)
                                     context!!.contentResolver.delete(uri1, null, null)
                                 } else {
                                     val values = ContentValues(1)
