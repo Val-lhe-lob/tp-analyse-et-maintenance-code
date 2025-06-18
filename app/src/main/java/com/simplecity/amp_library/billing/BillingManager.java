@@ -82,32 +82,47 @@ public class BillingManager implements PurchasesUpdatedListener {
     @Override
     public void onPurchasesUpdated(int resultCode, @Nullable List<Purchase> purchases) {
         if (resultCode == BillingClient.BillingResponse.OK && purchases != null) {
-            Purchase premiumPurchase = null;
-            for (Purchase purchase : purchases) {
-                if (purchase.getSku().equals(Config.SKU_PREMIUM)) {
-                    premiumPurchase = purchase;
-                }
-            }
-            if (purchaseFlowInitiated || restorePurchasesInitiated) {
-                if (premiumPurchase != null) {
-                    if (purchaseFlowInitiated) {
-                        updatesListener.onPremiumPurchaseCompleted();
-                        purchaseFlowInitiated = false;
-                    }
-                    if (restorePurchasesInitiated) {
-                        updatesListener.onPremiumPurchaseRestored();
-                        restorePurchasesInitiated = false;
-                    }
-                }
-            } else {
-                updatesListener.onPurchasesUpdated(purchases);
-            }
+            handleSuccessfulPurchase(purchases);
         } else if (resultCode == BillingClient.BillingResponse.USER_CANCELED) {
             Log.i(TAG, "onPurchasesUpdated() - user cancelled the purchase flow - skipping");
         } else {
             LogUtils.logException(TAG, String.format("onPurchasesUpdated() got unknown resultCode: %d", resultCode), null);
         }
     }
+
+    private void handleSuccessfulPurchase(List<Purchase> purchases) {
+        Purchase premiumPurchase = findPremiumPurchase(purchases);
+
+        if (purchaseFlowInitiated || restorePurchasesInitiated) {
+            handleInitiatedPurchase(premiumPurchase);
+        } else {
+            updatesListener.onPurchasesUpdated(purchases);
+        }
+    }
+
+    private Purchase findPremiumPurchase(List<Purchase> purchases) {
+        for (Purchase purchase : purchases) {
+            if (purchase.getSku().equals(Config.SKU_PREMIUM)) {
+                return purchase;
+            }
+        }
+        return null;
+    }
+
+    private void handleInitiatedPurchase(@Nullable Purchase premiumPurchase) {
+        if (premiumPurchase == null) return;
+
+        if (purchaseFlowInitiated) {
+            updatesListener.onPremiumPurchaseCompleted();
+            purchaseFlowInitiated = false;
+        }
+
+        if (restorePurchasesInitiated) {
+            updatesListener.onPremiumPurchaseRestored();
+            restorePurchasesInitiated = false;
+        }
+    }
+
 
     public void queryPurchases() {
         UnsafeAction queryAction = () -> {

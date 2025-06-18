@@ -14,17 +14,26 @@ public class HttpServer {
     private static final String TAG = "HttpServer";
     private static final String MIME_TYPE_HTML = "text/html";
 
-    private static HttpServer sHttpServer;
-
-    private NanoServer server;
-
+    private final NanoServer server;
     private String audioFileToServe;
     private byte[] imageBytesToServe;
-
     private FileInputStream audioInputStream;
     private ByteArrayInputStream imageInputStream;
-
     private boolean isStarted = false;
+
+    private final Map<String, String> mimeTypes = createMimeTypes();
+
+    private HttpServer() {
+        server = new NanoServer();
+    }
+
+    public static HttpServer getInstance() {
+        return Holder.INSTANCE;
+    }
+
+    private static class Holder {
+        private static final HttpServer INSTANCE = new HttpServer();
+    }
 
     public static HttpServer getInstance() {
         if (sHttpServer == null) {

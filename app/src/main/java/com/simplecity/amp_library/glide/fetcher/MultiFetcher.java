@@ -47,75 +47,79 @@ public class MultiFetcher implements DataFetcher<InputStream> {
 
     @Override
     public InputStream loadData(Priority priority) throws Exception {
-
-        InputStream inputStream = null;
-
-        //Custom/user selected artwork. Loads from a specific source.
-        UserSelectedArtwork userSelectedArtwork = ((ShuttleApplication) applicationContext).userSelectedArtwork.get(artworkProvider.getArtworkKey());
-        if (userSelectedArtwork != null) {
-            switch (userSelectedArtwork.type) {
-                case ArtworkProvider.Type.MEDIA_STORE:
-                    dataFetcher = new MediaStoreFetcher(applicationContext, artworkProvider);
-                    break;
-                case ArtworkProvider.Type.FOLDER:
-                    dataFetcher = new FolderFetcher(artworkProvider, new File(userSelectedArtwork.path));
-                    break;
-                case ArtworkProvider.Type.TAG:
-                    dataFetcher = new TagFetcher(artworkProvider);
-                    break;
-                case ArtworkProvider.Type.REMOTE:
-                    dataFetcher = new RemoteFetcher(artworkProvider);
-                    break;
-            }
-            inputStream = loadData(dataFetcher, priority);
-        }
-
-        //No user selected artwork. Check local then remote sources, according to user's preferences.
-
-        //Check the MediaStore
+        InputStream inputStream = loadUserSelectedArtwork(priority);
         if (inputStream == null && !settingsManager.ignoreMediaStoreArtwork()) {
-            dataFetcher = new MediaStoreFetcher(applicationContext, artworkProvider);
-            inputStream = loadData(dataFetcher, priority);
+            inputStream = tryLoad(new MediaStoreFetcher(applicationContext, artworkProvider), priority);
         }
 
         if (inputStream == null) {
-            if (settingsManager.preferEmbeddedArtwork()) {
-                //Check tags
-                if (!settingsManager.ignoreEmbeddedArtwork()) {
-                    dataFetcher = new TagFetcher(artworkProvider);
-                    inputStream = loadData(dataFetcher, priority);
-                }
-                //Check folders
-                if (inputStream == null && !settingsManager.ignoreFolderArtwork()) {
-                    dataFetcher = new FolderFetcher(artworkProvider, null);
-                    inputStream = loadData(dataFetcher, priority);
-                }
-            } else {
-                //Check folders
-                if (!settingsManager.ignoreFolderArtwork()) {
-                    dataFetcher = new FolderFetcher(artworkProvider, null);
-                    inputStream = loadData(dataFetcher, priority);
-                }
-                //Check tags
-                if (inputStream == null && !settingsManager.ignoreEmbeddedArtwork()) {
-                    dataFetcher = new TagFetcher(artworkProvider);
-                    inputStream = loadData(dataFetcher, priority);
-                }
-            }
+            inputStream = settingsManager.preferEmbeddedArtwork()
+                    ? loadEmbeddedFirst(priority)
+                    : loadFolderFirst(priority);
         }
 
-        if (inputStream == null) {
-            if (allowOfflineDownload
-                    || (settingsManager.canDownloadArtworkAutomatically()
-                    && ShuttleUtils.isOnline(applicationContext, true))) {
-
-                //Last FM
-                dataFetcher = new RemoteFetcher(artworkProvider);
-                inputStream = loadData(dataFetcher, priority);
-            }
+        if (inputStream == null && (allowOfflineDownload || (settingsManager.canDownloadArtworkAutomatically()
+                && ShuttleUtils.isOnline(applicationContext, true)))) {
+            inputStream = tryLoad(new RemoteFetcher(artworkProvider), priority);
         }
+
         return inputStream;
     }
+
+    private InputStream loadUserSelectedArtwork(Priority priority) throws Exception {
+        UserSelectedArtwork artwork = ((ShuttleApplication) applicationContext).userSelectedArtwork.get(artworkProvider.getArtworkKey());
+        if (artwork == null) return null;
+
+        switch (artwork.type) {
+            case ArtworkProvider.Type.MEDIA_STORE:
+                dataFetcher = new MediaStoreFetcher(applicationContext, artworkProvider);
+                break;
+            case ArtworkProvider.Type.FOLDER:
+                dataFetcher = new FolderFetcher(artworkProvider, new File(artwork.path));
+                break;
+            case ArtworkProvider.Type.TAG:
+                dataFetcher = new TagFetcher(artworkProvider);
+                break;
+            case ArtworkProvider.Type.REMOTE:
+                dataFetcher = new RemoteFetcher(artworkProvider);
+                break;
+            default:
+                return null;
+        }
+        return loadData(dataFetcher, priority);
+    }
+
+    private InputStream loadEmbeddedFirst(Priority priority) throws Exception {
+        if (!settingsManager.ignoreEmbeddedArtwork()) {
+            InputStream input = tryLoad(new TagFetcher(artworkProvider), priority);
+            if (input != null) return input;
+        }
+
+        if (!settingsManager.ignoreFolderArtwork()) {
+            return tryLoad(new FolderFetcher(artworkProvider, null), priority);
+        }
+
+        return null;
+    }
+
+    private InputStream loadFolderFirst(Priority priority) throws Exception {
+        if (!settingsManager.ignoreFolderArtwork()) {
+            InputStream input = tryLoad(new FolderFetcher(artworkProvider, null), priority);
+            if (input != null) return input;
+        }
+
+        if (!settingsManager.ignoreEmbeddedArtwork()) {
+            return tryLoad(new TagFetcher(artworkProvider), priority);
+        }
+
+        return null;
+    }
+
+    private InputStream tryLoad(DataFetcher fetcher, Priority priority) {
+        dataFetcher = fetcher;
+        return loadData(fetcher, priority);
+    }
+
 
     @Override
     public void cleanup() {

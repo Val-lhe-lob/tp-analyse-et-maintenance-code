@@ -59,28 +59,21 @@ public class PrefixHighlighter {
      * @param text the text to which to apply the highlight
      * @param prefix the prefix to look for
      */
-    private CharSequence apply(CharSequence text, char[] prefix) {
-        final int index = indexOfWordPrefix(text, prefix);
-        if (index != -1) {
-            if (mPrefixColorSpan == null) {
-                mPrefixColorSpan = new ForegroundColorSpan(mPrefixHighlightColor);
+        private CharSequence apply(CharSequence text, char[] prefix) {
+            final int index = indexOfWordPrefix(text, prefix);
+            if (index != -1) {
+                if (mPrefixColorSpan == null) {
+                    mPrefixColorSpan = new ForegroundColorSpan(mPrefixHighlightColor);
+                }
+                final SpannableString result = new SpannableString(text);
+                result.setSpan(mPrefixColorSpan, index, index + prefix.length, 0);
+                return result;
+            } else {
+                return text;
             }
-            final SpannableString result = new SpannableString(text);
-            result.setSpan(mPrefixColorSpan, index, index + prefix.length, 0);
-            return result;
-        } else {
-            return text;
         }
-    }
 
-    /**
-     * Finds the index of the first word that starts with the given prefix. If
-     * not found, returns -1
-     *
-     * @param text the text in which to search for the prefix
-     * @param prefix the text to find, in upper case letters
-     */
-    private static int indexOfWordPrefix(CharSequence text, char[] prefix) {
+        private static int indexOfWordPrefix(CharSequence text, char[] prefix) {
         if (TextUtils.isEmpty(text) || prefix == null) {
             return -1;
         }
@@ -93,32 +86,44 @@ public class PrefixHighlighter {
         }
 
         int i = 0;
-        while (i < tlen) {
-            // Skip non-word characters
-            while (i < tlen && !Character.isLetterOrDigit(text.charAt(i))) {
-                i++;
-            }
 
+        while (i < tlen) {
+            i = skipNonWordChars(text, i, tlen);
             if (i + plen > tlen) {
                 return -1;
             }
 
-            //  Compare the prefixes
-            int j;
-            for (j = 0; j < plen; j++) {
-                if (Character.toUpperCase(text.charAt(i + j)) != prefix[j]) {
-                    break;
-                }
-            }
-            if (j == plen) {
+            if (matchesPrefix(text, i, prefix)) {
                 return i;
             }
 
-            // Skip this word
-            while (i < tlen && Character.isLetterOrDigit(text.charAt(i))) {
-                i++;
-            }
+            i = skipWord(text, i, tlen);
         }
+
         return -1;
     }
+
+    private static int skipNonWordChars(CharSequence text, int i, int tlen) {
+        while (i < tlen && !Character.isLetterOrDigit(text.charAt(i))) {
+            i++;
+        }
+        return i;
+    }
+
+    private static boolean matchesPrefix(CharSequence text, int start, char[] prefix) {
+        for (int j = 0; j < prefix.length; j++) {
+            if (Character.toUpperCase(text.charAt(start + j)) != prefix[j]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static int skipWord(CharSequence text, int i, int tlen) {
+        while (i < tlen && Character.isLetterOrDigit(text.charAt(i))) {
+            i++;
+        }
+        return i;
+    }
+
 }

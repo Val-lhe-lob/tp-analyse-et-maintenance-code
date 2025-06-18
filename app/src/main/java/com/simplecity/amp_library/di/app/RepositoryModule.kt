@@ -14,7 +14,6 @@ import com.simplecity.amp_library.sql.databases.BlacklistWhitelistDbOpenHelper
 import com.squareup.sqlbrite2.BriteDatabase
 import com.squareup.sqlbrite2.SqlBrite
 import dagger.Binds
-import dagger.Module
 import dagger.Provides
 import io.reactivex.schedulers.Schedulers
 import javax.inject.Singleton

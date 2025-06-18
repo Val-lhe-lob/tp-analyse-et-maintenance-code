@@ -19,7 +19,6 @@ import com.simplecity.amp_library.ui.widgets.WidgetConfigureActivityMediumModule
 import com.simplecity.amp_library.ui.widgets.WidgetConfigureActivitySmall
 import com.simplecity.amp_library.ui.widgets.WidgetConfigureActivitySmallModule
 import com.simplecity.amp_library.utils.MediaButtonIntentReceiver
-import dagger.Module
 import dagger.Provides
 import dagger.android.ContributesAndroidInjector
 import dagger.android.support.AndroidSupportInjectionModule

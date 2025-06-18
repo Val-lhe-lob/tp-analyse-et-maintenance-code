@@ -293,6 +293,7 @@ public class ShuttleApplication extends DaggerApplication {
             try {
                 getContentResolver().delete(PlayCountTable.URI, selection.toString(), null);
             } catch (IllegalArgumentException ignored) {
+                //WIP
             }
         });
     }
@@ -327,51 +328,67 @@ public class ShuttleApplication extends DaggerApplication {
     }
 
     @NonNull
-    private Completable repairMediaStoreYearFromTags() {
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            return Completable.complete();
-        }
-
-        return songsRepository.getSongs(value -> value.year < 1)
-                .first(Collections.emptyList())
-                .flatMapObservable(Observable::fromIterable)
-                .concatMap(song -> Observable.just(song).delay(50, TimeUnit.MILLISECONDS))
-                .flatMap(song -> {
-                            if (!TextUtils.isEmpty(song.path)) {
-                                File file = new File(song.path);
-                                // Don't bother checking files > 100mb, uses too much memory.
-                                if (file.exists() && file.length() < 100 * 1024 * 1024) {
-                                    try {
-                                        AudioFile audioFile = AudioFileIO.read(file);
-                                        Tag tag = audioFile.getTag();
-                                        if (tag != null) {
-                                            String year = tag.getFirst(FieldKey.YEAR);
-                                            int yearInt = StringUtils.parseInt(year);
-                                            if (yearInt > 0) {
-                                                song.year = yearInt;
-                                                ContentValues contentValues = new ContentValues();
-                                                contentValues.put(MediaStore.Audio.Media.YEAR, yearInt);
-
-                                                return Observable.just(ContentProviderOperation
-                                                        .newUpdate(ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.id))
-                                                        .withValues(contentValues)
-                                                        .build());
-                                            }
-                                        }
-                                    } catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException | OutOfMemoryError e) {
-                                        LogUtils.logException(TAG, "Failed to repair media store year", e);
-                                    }
-                                }
-                            }
-                            return Observable.empty();
-                        }
-
-                ).toList()
-                .doOnSuccess(contentProviderOperations -> {
-                    getContentResolver().applyBatch(MediaStore.AUTHORITY, new ArrayList<>(contentProviderOperations));
-                })
-                .flatMapCompletable(songs -> Completable.complete());
+private Completable repairMediaStoreYearFromTags() {
+    if (!hasReadPermission()) {
+        return Completable.complete();
     }
+
+    return songsRepository.getSongs(song -> song.year < 1)
+            .first(Collections.emptyList())
+            .flatMapObservable(Observable::fromIterable)
+            .concatMap(song -> Observable.just(song).delay(50, TimeUnit.MILLISECONDS))
+            .flatMap(this::getYearUpdateOperation)
+            .toList()
+            .flatMapCompletable(ops -> {
+                if (!ops.isEmpty()) {
+                    try {
+                        getContentResolver().applyBatch(MediaStore.AUTHORITY, ops);
+                    } catch (Exception e) {
+                        LogUtils.logException(TAG, "Failed to update MediaStore", e);
+                    }
+                }
+                return Completable.complete();
+            });
+}
+
+private boolean hasReadPermission() {
+    return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+}
+
+private Observable<ContentProviderOperation> getYearUpdateOperation(Song song) {
+    if (TextUtils.isEmpty(song.path)) {
+        return Observable.empty();
+    }
+
+    File file = new File(song.path);
+    if (!file.exists() || file.length() >= 100 * 1024 * 1024) {
+        return Observable.empty();
+    }
+
+    try {
+        AudioFile audioFile = AudioFileIO.read(file);
+        Tag tag = audioFile.getTag();
+        if (tag != null) {
+            int year = StringUtils.parseInt(tag.getFirst(FieldKey.YEAR));
+            if (year > 0) {
+                song.year = year;
+                return Observable.just(createYearUpdateOperation(song.id, year));
+            }
+        }
+    } catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException | OutOfMemoryError e) {
+        LogUtils.logException(TAG, "Failed to repair media store year", e);
+    }
+
+    return Observable.empty();
+}
+
+private ContentProviderOperation createYearUpdateOperation(long songId, int year) {
+    ContentValues contentValues = new ContentValues();
+    contentValues.put(MediaStore.Audio.Media.YEAR, year);
+    return ContentProviderOperation
+            .newUpdate(ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId))
+            .withValues(contentValues)
+            .build();
+}
 
 }

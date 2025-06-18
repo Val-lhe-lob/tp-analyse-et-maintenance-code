@@ -273,8 +273,6 @@ internal class MediaPlayerPlayback(context: Context) : LocalPlayback(context), M
                 callbacks?.onError(this, "Server died")
                 return true
             }
-            else -> {
-            }
         }
 
         callbacks?.onError(this, "Unknown error")

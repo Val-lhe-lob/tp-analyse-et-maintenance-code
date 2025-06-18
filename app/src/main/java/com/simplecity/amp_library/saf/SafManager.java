@@ -204,9 +204,9 @@ public class SafManager {
     /**
      * @return a list of potential SD Card paths
      */
-    @TargetApi(Build.VERSION_CODES.KITKAT)
     private List<String> getExtSdCardPaths() {
         List<String> paths = new ArrayList<>();
+
         try {
             File[] externalFilesDirs = applicationContext.getExternalFilesDirs("external");
             if (externalFilesDirs != null && externalFilesDirs.length > 0) {
@@ -217,21 +217,28 @@ public class SafManager {
                             Log.w(TAG, "Unexpected external file dir: " + file.getAbsolutePath());
                         } else {
                             String path = file.getAbsolutePath().substring(0, index);
-                            try {
-                                path = new File(path).getCanonicalPath();
-                            } catch (IOException e) {
-                                // Keep non-canonical path.
-                            }
+                            path = getCanonicalPathSafe(path);
                             paths.add(path);
                         }
                     }
                 }
             }
-        } catch (NoSuchMethodError e) {
-            Crashlytics.log("getExtSdCardPaths() failed. " + e.getMessage());
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting external SD card paths", e);
         }
+
         return paths;
     }
+
+    private String getCanonicalPathSafe(String path) {
+        try {
+            return new File(path).getCanonicalPath();
+        } catch (IOException e) {
+            // Return original path if canonicalization fails
+            return path;
+        }
+    }
+
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void openDocumentTreePicker(Activity activity) {
